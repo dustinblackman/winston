@@ -26,7 +26,6 @@ vows.describe('winston').addBatch({
       assert.isTrue(!winston.transports.Transport);
       assert.isFunction(winston.transports.Console);
       assert.isFunction(winston.transports.File);
-      assert.isFunction(winston.transports.Webhook);
       assert.isObject(winston.default.transports.console);
       assert.isFalse(winston.emitErrs);
       assert.isObject(winston.config);
@@ -48,19 +47,7 @@ vows.describe('winston').addBatch({
     },
     "the log() method": helpers.testNpmLevels(winston, "should respond without an error", function (err) {
       assert.isNull(err);
-    }),
-    "the extend() method called on an empty object": {
-      topic: function (logger) {
-        var empty = {};
-        winston.extend(empty);
-        return empty;
-      },
-      "should define the appropriate methods": function (extended) {
-        ['log', 'profile', 'startTimer'].concat(Object.keys(winston.config.npm.levels)).forEach(function (method) {
-          assert.isFunction(extended[method]);
-        });
-      }
-    }
+    })
   }
 }).addBatch({
   "The winston module": {
@@ -72,7 +59,6 @@ vows.describe('winston').addBatch({
       "should have the proper methods defined": function () {
         assert.isObject(winston.transports);
         assert.isFunction(winston.transports.Console);
-        assert.isFunction(winston.transports.Webhook);
         assert.isObject(winston.default.transports.console);
         assert.isFalse(winston.emitErrs);
         assert.isObject(winston.config);
@@ -92,6 +78,36 @@ vows.describe('winston').addBatch({
           .forEach(function (key) {
             assert.isTrue(typeof winston[key] === 'undefined');
           });
+      }
+    },
+    "the clone() method": {
+      "with Error object": {
+        topic: function () {
+          var original = new Error("foo");
+          original.name = "bar";
+
+          var copy = winston.clone(original);
+
+          return { original: original, copy: copy };
+        },
+        "should clone the value": function (result) {
+          assert.notEqual(result.original, result.copy);
+          assert.equal(result.original.message, result.copy.message);
+          assert.equal(result.original.name, result.copy.name);
+        }
+      },
+      "with Date object": {
+        topic: function () {
+          var original = new Date(1000);
+
+          var copy = winston.clone(original);
+
+          return { original: original, copy: copy };
+        },
+        "should clone the value": function (result) {
+          assert.notEqual(result.original, result.copy);
+          assert.equal(result.original.getTime(), result.copy.getTime());
+        }
       }
     }
   }

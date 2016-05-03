@@ -7,7 +7,6 @@ There are several [core transports](#winston-core) included in `winston`, which 
 * **[Winston Core](#winston-core)**
   * [Console](#console-transport)
   * [File](#file-transport)
-  * [DailyRotateFile](#dailyrotatefile-transport)
   * [Http](#http-transport)
 
 * **[Winston More](#winston-more)**
@@ -21,10 +20,14 @@ There are several [core transports](#winston-core) included in `winston`, which 
   * [SimpleDB](#simpledb-transport)
   * [Mail](#mail-transport)
   * [Amazon SNS](#amazon-sns-simple-notification-system-transport)
+  * [Amazon CloudWatch](#amazon-cloudwatch-transport)
   * [Graylog2](#graylog2-transport)
   * [Cassandra](#cassandra-transport)
   * [Azure Table](#azure-table)
   * [Airbrake](#airbrake-transport)
+  * [Newrelic](#newrelic-transport) (errors only)
+  * [Logsene](#logsene-transport) (including Log-Alerts and Anomaly Detection)
+  * [Logz.io](#logzio-transport)
 
 ## Winston Core
 
@@ -32,7 +35,6 @@ There are several core transports included in `winston`, which leverage the buil
 
 * [Console](#console-transport)
 * [File](#file-transport)
-* [DailyRotateFile](#dailyrotatefile-transport)
 * [Http](#http-transport)
 
 ### Console Transport
@@ -54,7 +56,8 @@ The Console transport takes a few simple options:
 * __humanReadableUnhandledException__ Boolean flag indicating if uncaught exception should be output as human readable, instead of a single line
 * __showLevel:__ Boolean flag indicating if we should prepend output with level (default true).
 * __formatter:__ If function is specified, its return value will be used instead of default output. (default undefined)
-* __debugStdout:__ Boolean flag indicating if 'debug'-level output should be redirected to stdout instead of to stderr. (default false)
+* __stderrLevels__ Array of strings containing the levels to log to stderr instead of stdout, for example `['error', 'debug', 'info']`. (default `['error', 'debug']`)
+* (Deprecated: Use __stderrLevels__ instead) __debugStdout:__ Boolean flag indicating if 'debug'-level output should be redirected to stdout instead of to stderr. Cannot be used with __stderrLevels__. (default false)
 
 *Metadata:* Logged via util.inspect(meta);
 
@@ -80,35 +83,10 @@ The File transport should really be the 'Stream' transport since it will accept 
 * __logstash:__ If true, messages will be logged as JSON and formatted for logstash (default false).
 * __showLevel:__ Boolean flag indicating if we should prepend output with level (default true).
 * __formatter:__ If function is specified and `json` is set to `false`, its return value will be used instead of default output. (default undefined)
-* __tailable:__ If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The __filename__ will always have the most recent log lines. The larger the appended number, the older the log file.
+* __tailable:__ If true, log files will be rolled based on maxsize and maxfiles, but in ascending order. The __filename__ will always have the most recent log lines. The larger the appended number, the older the log file.  This option requires __maxFiles__ to be set, or it will be ignored.
 * __maxRetries:__ The number of stream creation retry attempts before entering a failed state. In a failed state the transport stays active but performs a NOOP on it's log function. (default 2)
 * __zippedArchive:__ If true, all log files but the current one will be zipped.
-
-*Metadata:* Logged via util.inspect(meta);
-
-
-### DailyRotateFile Transport
-
-``` js
-  winston.add(winston.transports.DailyRotateFile, options)
-```
-
-The DailyRotateFile transport can rotate files by minute, hour, day, month or year. Its options are identical to the File transport with the lone addition of the 'datePattern' option:
-
-* __datePattern:__ A string representing the pattern to be used when appending the date to the filename (default '.yyyy-MM-dd'). The meta characters used in this string will dictate the frequency of the file rotation. For example if your datePattern is simply '.HH' you will end up with 24 log files that are picked up and appended to every day.
-
-Valid meta characters in the datePattern are:
-
-* __yy:__ Last two digits of the year.
-* __yyyy:__ Full year.
-* __M:__ The month.
-* __MM:__ The zero padded month.
-* __d:__ The day.
-* __dd:__ The zero padded day.
-* __H:__ The hour.
-* __HH:__ The zero padded hour.
-* __m:__ The minute.
-* __mm:__ The zero padded minute.
+* __options:__ options passed to `fs.createWriteStream` (default `{flags: 'a'}`).
 
 *Metadata:* Logged via util.inspect(meta);
 
@@ -190,6 +168,27 @@ The Loggly transport is based on [Nodejitsu's][6] [node-loggly][7] implementatio
 * __json:__ If true, messages will be sent to Loggly as JSON.
 
 *Metadata:* Logged in suggested [Loggly format][10]
+
+
+### Logzio Transport
+
+You can download the logzio transport here : [https://github.com/logzio/winston-logzio](https://github.com/logzio/winston-logzio)  
+
+*Basic Usage*  
+```js
+var winston = require('winston');
+var logzioWinstonTransport = require('winston-logzio');
+
+var loggerOptions = {
+    apiToken: '__YOUR_API_TOKEN__'
+};
+winston.add(logzioWinstonTransport, loggerOptions);
+
+winston.log('info', 'winston logger configured with logzio transport');
+```
+
+For more information about how to configure the logzio transport, view the README.md in the [winston-logzio repo](https://github.com/logzio/winston-logzio).
+
 
 ### Riak Transport
 
@@ -318,6 +317,25 @@ Options:
 * __json:__ use json instead of a prettier (human friendly) string for meta information in the notification. (default: `false`)
 * __handleExceptions:__ set to true to have this transport handle exceptions. (default: `false`)
 
+### Amazon CloudWatch Transport
+
+The [winston-aws-cloudwatch][25] transport relays your log messages to Amazon CloudWatch.
+
+```js
+  var winston = require('winston'),
+      winstonAwsCloudWatch = require('winston-aws-cloudwatch');
+
+  winston.add(winstonAwsCloudWatch, options);
+```
+
+Options:
+
+* __logGroupName:__ The name of the CloudWatch log group to which to log. *[required]*
+* __logStreamName:__ The name of the CloudWatch log stream to which to log. *[required]*
+* __awsConfig:__ An object containing your `accessKeyId`, `secretAccessKey`, `region`, etc.
+
+Alternatively, you may be interested in [winston-cloudwatch][26].
+
 ### Amazon DynamoDB Transport
 The [winston-dynamodb][26] transport uses Amazon's DynamoDB as a sink for log messages. You can take advantage of the various authentication methods supports by Amazon's aws-sdk module. See [Configuring the SDK in Node.js](http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html).
 
@@ -349,7 +367,7 @@ Also supports callbacks for completion when the DynamoDB putItem has been compel
 
 ### Papertrail Transport
 
-[winston-papertrail][23] is a Papertrail transport:
+[winston-papertrail][27] is a Papertrail transport:
 
 ``` js
   var Papertrail = require('winston-papertrail').Papertrail;
@@ -468,6 +486,41 @@ The winlog2 transport uses the following options:
 * __eventLog__: Log type (default: 'APPLICATION')
 * __source__: Name of application which will appear in event log (default: 'node')
 
+### Newrelic Transport
+
+[newrelic-winston][23] is a Newrelic transport:
+
+``` js
+  var winston = require('winston');
+  winston.add(require('newrelic-winston'), options);
+```
+
+The Newrelic transport will send your errors to newrelic and accepts the follwing optins:
+
+* __env__:  the current evironment. Defatuls to `process.env.NODE_ENV`
+
+If `env` is either 'dev' or 'test' the lib will _not_ load the included newrelic module saving devs from anoying errors ;)
+
+### Logsene Transport
+
+[winston-logsene][24] transport for Elasticsearch bulk indexing via HTTPS to Logsene:
+
+``` js
+  var winston = require('winston')
+  var Logsene = require('winston-logsene')
+  var logger = new winston.Logger()
+  logger.add (Logsene, {token: process.env.LOGSENE_TOKEN})
+  logger.info ("Info message no. %d logged to %s",1,'Logsene', {metadata: "test-log", count:1 , tags: ['test', 'info', 'winston'], memoryUsage: process.memoryUsage()})
+```
+Options:
+* __token__: Logsene Application Token
+* __source__: Source of the logs (defaults to main module)
+
+[Logsene](http://www.sematext.com/logsene/) features:
+- Fulltext search
+- Anomaly detection and alerts
+- Kibana4 integration
+- Integration with [SPM Performance Monitoring for Node.js](http://www.sematext.com/spm/integrations/nodejs-monitoring.html)
 
 ## Find more Transports
 
@@ -526,3 +579,8 @@ The winlog2 transport uses the following options:
 [20]: https://github.com/jorgebay/winston-cassandra
 [21]: https://github.com/jpoon/winston-azuretable
 [22]: https://github.com/rickcraig/winston-airbrake2
+[23]: https://github.com/namshi/winston-newrelic
+[24]: https://github.com/sematext/winston-logsene
+[25]: https://github.com/timdp/winston-aws-cloudwatch
+[26]: https://github.com/lazywithclass/winston-cloudwatch
+[27]: https://github.com/kenperkins/winston-papertrail

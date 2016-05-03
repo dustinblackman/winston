@@ -1,16 +1,18 @@
 {
   "name": "winston",
   "description": "A multi-transport async logging library for Node.js",
-  "version": "1.0.1",
-  "author": "Nodejitsu Inc. <info@nodejitsu.com>",
+  "version": "2.2.0",
+  "author": "Charlie Robbins <charlie.robbins@gmail.com>",
   "maintainers": [
-    "indexzero <charlie@nodejitsu.com>"
+    "Jarrett Cruger <jcrugzz@gmail.com>",
+    "Alberto Pose <albertopose@gmail.com>"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/winstonjs/winston.git"
   },
   "keywords": [
+    "winston",
     "logging",
     "sysadmin",
     "tools"
@@ -25,6 +27,7 @@
     "stack-trace": "0.0.x"
   },
   "devDependencies": {
+    "cross-spawn-async": "^2.0.0",
     "hock": "1.x.x",
     "std-mocks": "~1.0.0",
     "vows": "0.7.x"
@@ -34,7 +37,7 @@
     "test": "vows --spec --isolate"
   },
   "engines": {
-    "node": ">= 0.8.0"
+    "node": ">= 0.10.0"
   },
   "license": "MIT"
 }
